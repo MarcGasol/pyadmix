@@ -1,0 +1,17 @@
+[project]
+name = "pyadmix"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "click>=8.3.1",
+]
+
+[project.scripts]
+pyadmix = "pyadmix.cli:main"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+]
