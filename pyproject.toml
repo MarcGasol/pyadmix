@@ -20,3 +20,6 @@ dev = [
 
 [tool.uv]
 package = true
+
+[tool.setuptools]
+packages = ["tritonadmix", "tritonadmix.io", "tritonadmix.models"]
