@@ -205,3 +205,9 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+
+DESIGN.md
+impl_plan.md
+instruction.md
+instruction.json

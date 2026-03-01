@@ -1,12 +1,12 @@
-# PyAdmix
+# TritonAdmix
 
-Hey! This is the repo for our PyAdmix CLI tool. We're using `uv` to manage packages because it's way faster and keeps our environments perfectly synced.
+Hey! This is the repo for our TritonAdmix CLI tool. We're using `uv` to manage packages because it's way faster and keeps our environments perfectly synced.
 
 Here is the quick-start guide to get your local environment running so we don't break each other's code.
 
 ## 1. Get the Environment Set Up
 
-First, make sure you have [uv](https://docs.astral.sh/uv/) installed. 
+First, make sure you have [uv](https://docs.astral.sh/uv/) installed.
 
 Don't use standard `pip install`. To make sure we are both running the exact same package versions, just pull the repo and run:
 
@@ -32,7 +32,7 @@ Windows (PowerShell):
 (Note: If Windows yells at you about execution policies, just run ```Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser``` once and try again).
 
 ## 3. Install the CLI & Run Tests
-To make the pyadmix command actually work in your terminal while you edit the code, install the package in editable mode:
+To make the tritonadmix command actually work in your terminal while you edit the code, install the package in editable mode:
 
 ```Bash
 uv pip install -e .
@@ -40,7 +40,7 @@ uv pip install -e .
 To make sure everything is wired up right, run the help command:
 
 ```Bash
-pyadmix --help
+tritonadmix --help
 ```
 Testing:
 We're using pytest to test the CLI parsing and the model logic. Before you push any code, just run:
