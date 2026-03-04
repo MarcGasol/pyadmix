@@ -171,8 +171,9 @@ def run_admixture(G: np.ndarray, k: int, max_iter: int = 100, tol: float = 1e-4,
         if verbose and (iteration + 1) % 10 == 0:
             print(f"  Iteration {iteration + 1}: log-likelihood = {ll:.2f}")
 
-        # Check convergence
-        if abs(ll - prev_ll) < tol:
+        # Check convergence using relative tolerance
+        rel_change = abs(ll - prev_ll) / (abs(ll) + 1e-10)
+        if rel_change < tol:
             if verbose:
                 print(f"  Converged at iteration {iteration + 1}")
             break
