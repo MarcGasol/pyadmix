@@ -42,7 +42,9 @@ def print_timing(timing):
 @click.option("--tol", default=1e-4, type=float, show_default=True, help="Convergence tolerance.")
 @click.option("--seed", default=None, type=int, help="Random seed for reproducibility.")
 @click.option("--profile", is_flag=True, help="Show timing breakdown.")
-def run(vcf, populations, output_dir, max_iter, tol, seed, profile):
+@click.option("--method", default="em", type=click.Choice(["em", "bcr"]),
+              show_default=True, help="Algorithm: 'em' (standard) or 'bcr' (block coordinate relaxation).")
+def run(vcf, populations, output_dir, max_iter, tol, seed, profile, method):
     """Run ADMIXTURE algorithm on VCF data."""
 
     click.echo(click.style("TritonAdmix", fg="green", bold=True))
@@ -61,7 +63,7 @@ def run(vcf, populations, output_dir, max_iter, tol, seed, profile):
     click.echo(f"  {len(sample_ids)} individuals, {len(variant_ids)} SNPs")
 
     Q, F, log_liks, timing = run_admixture(
-        G, k=populations, max_iter=max_iter, tol=tol, seed=seed, verbose=True
+        G, k=populations, max_iter=max_iter, tol=tol, seed=seed, verbose=True, method=method
     )
 
     q_path = os.path.join(output_dir, f"{base_name}.{populations}.Q")
@@ -81,9 +83,11 @@ def run(vcf, populations, output_dir, max_iter, tol, seed, profile):
 @click.option("-o", "--output", default=None, type=str, help="Output plot path (default: output/<name>.png).")
 @click.option("--vcf", default=None, type=click.Path(exists=True), help="VCF file (for sample order).")
 @click.option("--labels", default=None, type=click.Path(exists=True), help="Population labels TSV (igsr_samples.tsv format).")
+@click.option("--pop-level", default="super", type=click.Choice(["super", "pop"]),
+              show_default=True, help="Label level: 'super' (AFR, EUR, etc.) or 'pop' (CEU, GWD, etc.).")
 @click.option("--title", default=None, type=str, help="Plot title.")
 @click.option("--dpi", default=150, type=int, show_default=True, help="Output resolution.")
-def plot(q_matrix, output, vcf, labels, title, dpi):
+def plot(q_matrix, output, vcf, labels, pop_level, title, dpi):
     """Plot ancestry proportions from Q matrix."""
 
     click.echo(click.style("TritonAdmix Plot", fg="green", bold=True))
@@ -100,7 +104,8 @@ def plot(q_matrix, output, vcf, labels, title, dpi):
     population_labels = None
     if vcf and labels:
         sample_ids = load_sample_ids(vcf)
-        population_labels = load_population_labels(labels, sample_ids)
+        use_superpop = (pop_level == "super")
+        population_labels = load_population_labels(labels, sample_ids, use_superpop=use_superpop)
         click.echo(f"Loaded population labels for {len(population_labels)} samples")
 
     plot_admixture(Q, output_path=output, population_labels=population_labels,
