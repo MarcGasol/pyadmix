@@ -1,6 +1,7 @@
 # tritonadmix/viz/plot.py
 
 import numpy as np
+import pandas as pd
 import matplotlib.pyplot as plt
 
 
@@ -8,16 +9,22 @@ def load_q_matrix(q_path):
     return np.loadtxt(q_path)
 
 
-def load_population_labels(tsv_path, sample_ids):
-    """Load population labels and return labels in sample order."""
+def load_population_labels(tsv_path, sample_ids, use_superpop=True):
+    """Load population labels and return labels in sample order.
+
+    use_superpop: If True, use Superpopulation code (column 5: AFR, EUR, etc.)
+                  If False, use Population code (column 3: CEU, GWD, etc.)
+    """
     sample_to_pop = {}
+    col_idx = 5 if use_superpop else 3  # Superpopulation vs Population code
+
     with open(tsv_path) as f:
         f.readline()  # skip header
         for line in f:
             fields = line.strip().split('\t')
             sample_id = fields[0]
-            superpop = fields[5] if len(fields) > 5 else "Unknown"
-            sample_to_pop[sample_id] = superpop
+            pop = fields[col_idx] if len(fields) > col_idx else "Unknown"
+            sample_to_pop[sample_id] = pop
 
     return [sample_to_pop.get(sid, "Unknown") for sid in sample_ids]
 
@@ -40,7 +47,7 @@ def plot_admixture(Q, output_path=None, population_labels=None, sort_by_populati
 
     Q: ancestry matrix (n_individuals, k)
     population_labels: list of population labels for each individual
-    sort_by_population: if True, group individuals by population
+    sort_by_population: if True, group individuals by population, then by ancestry
     """
     n_individuals, k = Q.shape
 
@@ -52,11 +59,19 @@ def plot_admixture(Q, output_path=None, population_labels=None, sort_by_populati
         cmap = plt.colormaps['tab10']
         colors = [cmap(i) for i in range(k)]
 
-    # Sort by population if labels provided
-    if population_labels is not None and sort_by_population:
-        sorted_indices = np.argsort(population_labels)
-        Q = Q[sorted_indices]
-        population_labels = [population_labels[i] for i in sorted_indices]
+    # Create DataFrame for easier sorting
+    data = pd.DataFrame(Q, columns=[f'K{i+1}' for i in range(k)])
+    cols = list(data.columns)
+
+    if population_labels is not None:
+        data['pop'] = population_labels
+        if sort_by_population:
+            # Sort by population, then by ancestry proportions (like course assignment)
+            data = data.sort_values(['pop'] + cols)
+        population_labels = data['pop'].tolist()
+        data = data.drop('pop', axis=1)
+
+    Q_sorted = data.values
 
     fig, ax = plt.subplots(figsize=figsize)
 
@@ -65,14 +80,19 @@ def plot_admixture(Q, output_path=None, population_labels=None, sort_by_populati
     bottom = np.zeros(n_individuals)
 
     for i in range(k):
-        ax.bar(x, Q[:, i], bottom=bottom, width=1.0, color=colors[i],
+        ax.bar(x, Q_sorted[:, i], bottom=bottom, width=1.0, color=colors[i],
                edgecolor='none', label=f'K{i+1}')
-        bottom += Q[:, i]
+        bottom += Q_sorted[:, i]
 
     ax.set_xlim(-0.5, n_individuals - 0.5)
     ax.set_ylim(0, 1)
     ax.set_ylabel('Ancestry Proportion')
-    ax.set_xlabel('Individuals')
+
+    # Remove top and right spines (like course assignment)
+    ax.spines['right'].set_visible(False)
+    ax.spines['top'].set_visible(False)
+    ax.yaxis.set_ticks_position('left')
+    ax.xaxis.set_ticks_position('bottom')
 
     if title:
         ax.set_title(title)
@@ -81,32 +101,18 @@ def plot_admixture(Q, output_path=None, population_labels=None, sort_by_populati
 
     # Add population labels on x-axis if provided
     if population_labels is not None:
-        # Find population boundaries
-        pop_boundaries = []
-        current_pop = population_labels[0]
-        start = 0
+        # Only show label for first sample in each population (like course assignment)
+        xticklabels = []
+        currpop = ""
+        for i in range(len(population_labels)):
+            if population_labels[i] != currpop:
+                xticklabels.append(population_labels[i])
+                currpop = population_labels[i]
+            else:
+                xticklabels.append("")
 
-        for i, pop in enumerate(population_labels):
-            if pop != current_pop:
-                pop_boundaries.append((start, i - 1, current_pop))
-                start = i
-                current_pop = pop
-        pop_boundaries.append((start, len(population_labels) - 1, current_pop))
-
-        # Add vertical separators and horizontal brackets with labels
-        for start, end, pop in pop_boundaries:
-            mid = (start + end) / 2
-            # Vertical separator at start
-            ax.axvline(x=start - 0.5, color='black', linewidth=1.0)
-            # Horizontal bracket line under this population's region
-            ax.plot([start - 0.3, end + 0.3], [-0.06, -0.06], color='black',
-                    linewidth=1.5, transform=ax.get_xaxis_transform(), clip_on=False)
-            # Population label
-            ax.text(mid, -0.12, pop, ha='center', va='top', fontsize=9, fontweight='bold',
-                    transform=ax.get_xaxis_transform())
-
-        ax.axvline(x=n_individuals - 0.5, color='black', linewidth=1.0)
-        ax.set_xticks([])
+        ax.set_xticks(range(n_individuals))
+        ax.set_xticklabels(xticklabels, rotation=90, fontsize=8)
     else:
         ax.set_xticks([])
 

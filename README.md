@@ -73,7 +73,7 @@ tritonadmix plot -q output/1000G_chr22_pruned.5.Q
 
 **Plot with population labels:**
 ```bash
-tritonadmix plot -q output/1000G_chr22_pruned.5.Q \
+tritonadmix plot -q output/1000G_chr22_pruned.2.Q \
     --vcf data/1000G_chr22_pruned.vcf.gz \
     --labels data/igsr_samples.tsv
 ```
